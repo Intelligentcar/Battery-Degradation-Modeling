@@ -15,32 +15,6 @@ ana_df_temp(:,22) = Rec(:,3);
 ana_df_temp(:,24) = Dist_Rec(:,2);
 ana_df_temp(:,25) = Dist_Rec(:,3);
 
-%% AIE
-ana_df_temp(52,18) = 0.1251;
-ana_df_temp(52,19) = 0.9508;
-% abc
-
-ana_df_temp(52,27) = 0.0628;
-ana_df_temp(52,28) = 0.0071;
-% ana_df_temp(52,28) = 0.1251;
-% distance % km
-ana_df_temp(12,24) = 112457;ana_df_temp(12,25) = 149296;
-ana_df_temp(15,24) = 84923;ana_df_temp(15,25) = 108822;
-ana_df_temp(16,24) = 61522;ana_df_temp(16,25) = 71539;
-% NCC
-ana_df_temp(12,21) = 722.488;ana_df_temp(12,22) = 959.128;
-ana_df_temp(15,21) = 416.65;ana_df_temp(15,22) = 599.292;
-ana_df_temp(16,21) = 216.612;%530.965;
-ana_df_temp(16,22) = 255.579;%660.307;
-%%
-prev_ana_df = load('A6_EV54_traveling_rec_interval_accum_250716.mat');
-ana_df_temp_prev = prev_ana_df.trveling_rec;
-ana_idx = 4:4:216;
-ana_df_temp_prev_GoF = ana_df_temp_prev(ana_idx,19); 
-ana_df_temp_prev_z = ana_df_temp_prev(ana_idx,18); 
-
-ana_df_temp(:,19) = ana_df_temp_prev_GoF;
-ana_df_temp(:,18) = ana_df_temp_prev_z;
 %%
 ana_idx_temp = ana_df_temp(:,18) < 0.5 & ana_df_temp(:,21) < ana_df_temp(:,22) & ...
           (ana_df_temp(:,25) - ana_df_temp(:,24)) > 0 & ...
@@ -89,11 +63,11 @@ tbl_target = tbl;%(Niro_idx,:);
 
 %% PCC & VIF test Table 1
 % PCC test
-corr_target = [tbl_niro.AIE, tbl_niro.mean_dch, ...
-               tbl_niro.mean_ch, tbl_niro.mean_BT,...
-               tbl_niro.mean_SOC, tbl_niro.mean_IR, ...
-               tbl_niro.cyc_km, tbl_niro.CTC_age, ...
-               tbl_niro.mean_SP];
+corr_target = [tbl_target.AIE, tbl_target.mean_dch, ...
+               tbl_target.mean_ch, tbl_target.mean_BT,...
+               tbl_target.mean_SOC, tbl_target.mean_IR, ...
+               tbl_target.cyc_km, tbl_target.CTC_age, ...
+               tbl_target.mean_SP];
 
 corr_result = corr(corr_target);
 % VIF test
