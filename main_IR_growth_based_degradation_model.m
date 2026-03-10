@@ -12,7 +12,7 @@ dirinfo=dir();
 folder_len = length(dirinfo);
 
 batt_loss = [];
-result_comp = [];
+batt_loss = [];
 
 gof_rec = [];
 
@@ -22,6 +22,7 @@ EV_rec2 = [];
 exp_param = [];
 exp_param_2d = [];
 trveling_rec = [];
+Quaterly_df = [];
 
 % code_path 
 cd(func_path)
@@ -214,11 +215,11 @@ for d = 3:56(folder_len)
         
         a1_mile = [a1_mile;df.hist_trip];                
         a1_Thput = [a1_Thput;temp_Thput];
-        a1_BC = [a1_BC; df.Batt_current(1:end)]; % regen과 demand 모두 포함
+        a1_BC = [a1_BC; df.Batt_current(1:end)]; % regen & demand 
         a1_trq = [a1_trq;df.M_torque]; % acc/dec
         a1_rpm = [a1_rpm;df.RPM];
         a1_vel = [a1_vel;df.speed]; % sp
-        a1_aux = [a1_aux; df.VCULDC_current.*df.VCULDC_vol]; % LDC 파워 W
+        a1_aux = [a1_aux; df.VCULDC_current.*df.VCULDC_vol]; % LDC  W
         a1_BT = [a1_BT; Bat_T]; % Battery temperature
         a1_SOC = [a1_SOC; df.SOC]; % SoC
 
@@ -238,17 +239,16 @@ for d = 3:56(folder_len)
     total_micro_SOC_temp = total_micro_SOC(Ah_idx);         
    
     Ah_len = size(total_micro_Ah,1);
-
+    %% Whole period
     target_pts = normalize([total_micro_BT_temp total_micro_Ah_temp total_micro_R_temp]);
     dbs_idx = dbscan(target_pts,0.5,10); %% dbscan
     
-    tot_idx = total_micro_SOC_temp > 30 & total_micro_SOC_temp <= 85;% & one1_idx;
+    tot_idx = total_micro_SOC_temp > 30 & total_micro_SOC_temp <= 85;%
 
     total_x = total_micro_BT_temp(dbs_idx>0 & tot_idx)+0.01;
     total_y = total_micro_Ah_temp(dbs_idx>0 & tot_idx);
     total_z = total_micro_R_temp(dbs_idx>0 & tot_idx);
-    total_w = total_micro_SOC_temp(dbs_idx>0 & tot_idx); 
-
+    total_w = total_micro_SOC_temp(dbs_idx>0 & tot_idx);   
   
     k0 = [0 0 0];
     k1 = [0 0 0 0];
@@ -267,17 +267,15 @@ for d = 3:56(folder_len)
     [Fit1, gof1] = fit([total_x,total_y],total_z,fitfun1,'StartPoint',k1);
     [Fit2, gof2] = fit([total_x,total_y],total_z,fitfun2,'StartPoint',k2);
 
-    
-    temp_loss = [d Fit0.d gof0.adjrsquare];
-    batt_loss = [batt_loss;temp_loss];
+   
     exp_param = [0.035 Fit0.b Fit0.c];
   
     temp_comp = [d Fit0.d Fit1.d Fit2.d ...
                  gof0.adjrsquare gof1.adjrsquare gof2.adjrsquare];
     % save aging model fitting results
-    result_comp = [result_comp;temp_comp];
+    batt_loss = [batt_loss;temp_comp];
      
-    %%
+    %
     a24_mile = a1_mile;a24_Thput = a1_Thput;a24_BC = a1_BC;a24_trq = a1_trq; 
     a24_rpm = a1_rpm;a24_vel = a1_vel;a24_aux = a1_aux;a24_BT = a1_BT;a24_SOC = a1_SOC; % SoC
 
@@ -311,7 +309,112 @@ for d = 3:56(folder_len)
     
     trveling_rec = [trveling_rec; temp_rec4];
    
+    %% Quarterly analysis
+    th1 = round(Ah_len/4);th2 = round(Ah_len/2);th3 = round(3*Ah_len/4);
+
+    one1_idx = zeros(Ah_len,1);        one2_idx = zeros(Ah_len,1);    
+    one3_idx = zeros(Ah_len,1);        one4_idx = zeros(Ah_len,1);    
+    
+    one1_idx(1:th1) = 1;        one2_idx(th1+1:th2) = 1;
+    one3_idx(th2+1:th3) = 1;    one4_idx(th3+1:end) = 1;
+
+    tot1_idx = total_micro_SOC_temp > 30 & total_micro_SOC_temp <= 85;
+    tot2_idx = total_micro_SOC_temp > 30 & total_micro_SOC_temp <= 85;
+    tot3_idx = total_micro_SOC_temp > 30 & total_micro_SOC_temp <= 85;
+    tot4_idx = total_micro_SOC_temp > 30 & total_micro_SOC_temp <= 85;
+    target_pts = normalize([total_micro_BT_temp total_micro_Ah_temp total_micro_R_temp]);
+    dbs_idx = dbscan(target_pts,0.5,10); %% dbscan을 했다는 것 업데이트 확인!@
+   
+    % DBSCAN 버전
+    total_x = total_micro_BT_temp(dbs_idx>0 & tot1_idx)+0.01;total_y = total_micro_Ah_temp(dbs_idx>0 & tot1_idx);
+    total_z = total_micro_R_temp(dbs_idx>0 & tot1_idx);total_w = total_micro_SOC_temp(dbs_idx>0 & tot1_idx); 
+
+    total1_x = total_micro_BT_temp(dbs_idx>0 & tot1_idx == 1)+0.01;total1_y = total_micro_Ah_temp(dbs_idx>0 & tot1_idx == 1);
+    total1_z = total_micro_R_temp(dbs_idx>0 & tot1_idx == 1);total1_w = total_micro_SOC_temp(dbs_idx>0 & tot1_idx == 1);    
+
+    total2_x = total_micro_BT_temp(dbs_idx>0 & tot2_idx == 1)+0.01;total2_y = total_micro_Ah_temp(dbs_idx>0 & tot2_idx == 1);
+    total2_z = total_micro_R_temp(dbs_idx>0 & tot2_idx == 1);total2_w = total_micro_SOC_temp(dbs_idx>0 & tot2_idx == 1);   
+
+    total3_x = total_micro_BT_temp(dbs_idx>0 & tot3_idx == 1)+0.01;total3_y = total_micro_Ah_temp(dbs_idx>0 & tot3_idx == 1);
+    total3_z = total_micro_R_temp(dbs_idx>0 & tot3_idx == 1);total3_w = total_micro_SOC_temp(dbs_idx>0 & tot3_idx == 1);   
+
+    total4_x = total_micro_BT_temp(dbs_idx>0 & tot4_idx == 1)+0.01;total4_y = total_micro_Ah_temp(dbs_idx>0 & tot4_idx == 1);
+    total4_z = total_micro_R_temp(dbs_idx>0 & tot4_idx == 1);total4_w = total_micro_SOC_temp(dbs_idx>0 & tot4_idx == 1);   
+    
+    trveling_rec = [trveling_rec; temp_rec4];
+
+    %%
+    k0 = [0 0 0];
+    fitfun = fittype( '(0.035*exp(-b*x)+c)*y^d',...
+        'dependent',{'z'},'independent',{'x','y'}, ...
+        'coefficients',{'b','c','d'});
+    [Fit, gof] = fit([total_x,total_y],total_z,fitfun,'StartPoint',k0);
+
+    flag1 = 0;
+    if size(total1_x,1) > 10
+        k0 = [Fit.b Fit.c Fit.d];
+        [Fit5, gof5] = fit([total1_x,total1_y],total1_z,fitfun,'StartPoint',k0);
+        exp_param5 = [0.035 Fit5.b Fit5.c];
+        flag1 = 1;
+    end
+
+    flag2 = 0;
+    if size(total2_x,1) > 10
+        k0 = [Fit5.b Fit5.c Fit5.d];
+        temp2_x = [total1_x;total2_x];
+        temp2_y = [total1_y;total2_y];
+        temp2_z = [total1_z;total2_z];
+        [Fit6, gof6] = fit([temp2_x,temp2_y],temp2_z,fitfun,'StartPoint',k0);
+        exp_param6 = [0.035 Fit6.b Fit6.c];
+        flag2 = 1;
+    end
+
+    flag3 = 0;
+    if size(total3_x,1) > 10
+        k0 = [Fit6.b Fit6.c Fit6.d];
+        temp3_x = [temp2_x;total3_x];
+        temp3_y = [temp2_y;total3_y];
+        temp3_z = [temp2_z;total3_z];
+        [Fit7, gof7] = fit([temp3_x,temp3_y],temp3_z,fitfun,'StartPoint',k0);
+        exp_param7 = [0.035 Fit7.b Fit7.c];
+        flag3 = 1;
+    end
+
+    flag4 = 0;
+    if size(total4_x,1) > 10
+        k0 = [Fit7.b Fit7.c Fit7.d];
+        temp4_x = [temp3_x;total4_x];
+        temp4_y = [temp3_y;total4_y];
+        temp4_z = [temp3_z;total4_z];
+        [Fit8, gof8] = fit([temp4_x,temp4_y],temp4_z,fitfun,'StartPoint',k0);
+        exp_param8 = [0.035 Fit8.b Fit8.c];
+        flag4 = 1;
+    end
+
+    if flag1 == 1        
+        temp_rec1 = [d gof5.adjrsquare];
+        Quaterly_df = [Quaterly_df; temp_rec1];
+    end
+    
+    if flag2 == 1
+        temp_rec2 = [d gof6.adjrsquare];
+        Quaterly_df = [Quaterly_df; temp_rec2];
+    end
+
+    if flag3 == 1    
+        temp_rec3 = [d gof7.adjrsquare];
+        Quaterly_df = [Quaterly_df; temp_rec3];
+    end
+
+    
+    if flag4 == 1
+        temp_rec4 = [d gof8.adjrsquare]; %50
+        Quaterly_df = [Quaterly_df; temp_rec4];
+    end      
+   
 end
 %%
+save('Data_z_GOF_rec.mat', 'batt_loss')
 save('Data_Traveling_rec.mat', 'trveling_rec')
+save('Data_Quarterly_rec.mat', 'Quaterly_df')
 % writematrix(trveling_rec,'1Data_Traveling_rec.mat')

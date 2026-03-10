@@ -4,7 +4,9 @@ clc
 
 % func_path = ''; % file_path
 % cd(func_path)
+load('Data_z_GOF_rec.mat')
 load('Data_Traveling_rec.mat')
+load('Data_Quarterly_rec.mat')
 load('Data_CTC_rec.mat')
 load('Data_Dist_rec.mat')
 %% Data pre-processing
@@ -84,7 +86,48 @@ X = corr_target(:,4:end); %[tbl(:,3:6) tbl(:,8:10) tbl(:,20:31) tbl(:,37)]; % [c
 
 mdl = stepwiselm(X, y, 'Upper','poly111111', 'PEnter', 0.05);
 
-%% Correlation Figure 5
+%% Boxplot - GOF & z Figure 4
+
+x1 = batt_loss(:,5);
+x2 = batt_loss(:,6);
+x3 = batt_loss(:,7);
+% close
+f = figure(107);
+f.Position(3:4) = [800 350];
+boxplot([x1,x2,x3],...
+    'Symbol','','Labels',{'Exponential','Polynomial','Modified Arrheinus'})
+FS= 14;
+grid on
+ylim([0.8 1])
+ylabel('GoF [0 - 1]')
+set(gca,'FontSize',FS,'fontname','Times New Roman')
+exportgraphics(f, "Fig_batt_bamfittingresult.pdf")
+
+x4 = batt_loss(:,2);
+x5 = batt_loss(:,3);
+x6 = batt_loss(:,4);
+% close
+f1 = figure(108);
+f1.Position(3:4) = [800 350];
+boxplot([x4,x5,x6],...
+    'Symbol','','Labels',{'Exponential','Polynomial','Modified Arrheinus'})
+FS= 14;
+grid on
+ylim([-0.2 0.6])
+ylabel('IRDI')
+set(gca,'FontSize',FS,'fontname','Times New Roman')
+
+% cd('save path')
+exportgraphics(f1, "Fig_batt_bamfittingresult_z.pdf")
+%% Figure 5
+figure(109)
+boxplot(Quaterly_df(:,2),'Symbol','')
+xlabel('Time-Segmented Fitting Results (Quarterly Analysis)')
+ylabel('Coodness of Fitness')
+ylim([0.7 1])
+FS=14;
+set(gca,'FontSize',FS,'fontname','Times New Roman')
+%% Correlation Figure 6
 % ana_df 
 % mean(dch_bc) mean(ch_bc) ... %3
 % mean(a2_SOC) mean(a2_BT) ... %5
@@ -137,9 +180,9 @@ ax.YAxis.TickLabelInterpreter = 'latex';
 
 set(gca, 'fontname', 'Times New Roman', 'fontsize', 14)
 % cd 'save_path'
-% exportgraphics(h, "Fig_corr_plot.pdf") ;
+exportgraphics(h, "Fig_corr_plot.pdf") ;
 
-%% Figure 6
+%% Figure 7
 close all
 Ioniq_idx = ana_df(:,20)==78; 
 Niro_idx = ana_df(:,20)==180;
@@ -150,6 +193,7 @@ plot(mean_IR(Ioniq_idx),(AIE(Ioniq_idx)),'square',...
 plot(mean_IR(Niro_idx),(AIE(Niro_idx)),'o',...
     'MarkerEdgeColor',[0 0 0],'MarkerSize',10, 'LineWidth',2)
 
+ylim([0.02 0.14])
 hold off
 legend('Ioniq EV','Niro & Kona EV')
 title(['PCC: ' num2str(round(corr(AIE, mean_IR),3))])
@@ -166,8 +210,8 @@ ylabel('$z$', 'Interpreter', 'latex')
 
 set(gca, 'fontname', 'Times New Roman', 'fontsize', 14)
 % cd 'save path'
-% exportgraphics(f, "Fig_IR_VS_BAI.pdf") ;
-
+% exportgraphics(f, "Fig_IR_VS_BAI.pdf");
+%%
 f = figure(5);
 hold on
 plot(tbl.cyc_km(Ioniq_idx),(AIE(Ioniq_idx)),'square',...
@@ -175,6 +219,8 @@ plot(tbl.cyc_km(Ioniq_idx),(AIE(Ioniq_idx)),'square',...
 plot(tbl.cyc_km(Niro_idx),(AIE(Niro_idx)),'o',...
     'MarkerEdgeColor',[0 0 0],'MarkerSize',10, 'LineWidth',2)
 hold off
+
+ylim([0.02 0.14])
 legend('Ioniq EV','Niro & Kona EV','Location','southeast')
 title(['PCC: ' num2str(round(corr(AIE, tbl.cyc_km),3))])
 % legend('5 ^oC','10 ^oC','15 ^oC','20 ^oC',...
@@ -186,7 +232,8 @@ ylabel('$z$', 'Interpreter', 'latex')
 set(gca, 'fontname', 'Times New Roman', 'fontsize', 14)
 % exportgraphics(f, "Fig_Thput_VS_BAI.pdf") ;
 
-%% Figure 7
+%% Figure 8
+close all
 f = figure(7);
 hold on
 plot(tbl.temp_cycle(Ioniq_idx),tbl.temp_dist(Ioniq_idx),'square',...
@@ -198,7 +245,7 @@ legend('Ioniq EV','Niro & Kona EV','Location','southeast')
 xlabel('$NCC_{used}$', 'Interpreter', 'latex')
 ylabel('$d_{used}$', 'Interpreter', 'latex')
 set(gca, 'fontname', 'Times New Roman', 'fontsize', 14)
-% exportgraphics(f, "Fig_NCC_VS_Dist.pdf") ;
+exportgraphics(f, "Fig_NCC_VS_Dist.pdf") ;
 
 f = figure(8);
 hold on
@@ -211,7 +258,7 @@ legend('Ioniq EV','Niro & Kona EV','Location','southeast')
 xlabel('$NCC_{used}$', 'Interpreter', 'latex')
 ylabel('$\sigma_{NCC}$', 'Interpreter', 'latex')
 set(gca, 'fontname', 'Times New Roman', 'fontsize', 14)
-% exportgraphics(f, "Fig_NCC_VS_Thput.pdf") ;
+exportgraphics(f, "Fig_NCC_VS_Thput.pdf") ;
 
 f = figure(9);
 hold on
@@ -225,7 +272,7 @@ xlabel('$d_{used}$', 'Interpreter', 'latex')
 ylabel('$\sigma_{NCC}$', 'Interpreter', 'latex')
 % zlabel('$z$', 'Interpreter', 'latex')
 set(gca, 'fontname', 'Times New Roman', 'fontsize', 14)
-% exportgraphics(f, "Fig_Dist_VS_Thput.pdf") ;
+exportgraphics(f, "Fig_Dist_VS_Thput.pdf") ;
 %% PCA Table 3
 
 tbl_mat = [tbl.mean_IR, tbl.cyc_km, tbl.mean_SP, tbl.CTC_age];% [tbl.mean_IR, tbl.cyc_km, tbl.CTC_age, tbl.mean_SP];
@@ -233,9 +280,9 @@ tbl_mat = [tbl.mean_IR, tbl.cyc_km, tbl.mean_SP, tbl.CTC_age];% [tbl.mean_IR, tb
 [coeff,score,latent,tsquared,explained] = pca(normalize(tbl_mat));
 
 %% stepwise Table 4
-lme =fitlme(tbl,['AIE~CTC_age']); % 1
+% lme =fitlme(tbl,['AIE~CTC_age']); % 1
 % lme =fitlme(tbl,['AIE~mean_SP']); % 2
-% lme =fitlme(tbl,['AIE~cyc_km']); % 3
+lme =fitlme(tbl,['AIE~cyc_km']); % 3
 % lme =fitlme(tbl,['AIE~mean_IR']); % 4
 % lme =fitlme(tbl_target,['AIE~mean_IR+CTC_age']); % 5
 % lme =fitlme(tbl_target,['AIE~mean_IR+mean_SP']); % 6
